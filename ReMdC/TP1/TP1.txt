@@ -1,0 +1,7 @@
+Etape 3
+1. menu_simple(crudites, P, D).
+2. menu_simple(crudites, P, creme).
+3. menu_simple(E,P,D), possion(P).
+4. menu_simple(E P, D), poisson(P), E==melon.
+Etape 4
+1. menu_simple(E P, D), E==melon, poisson(P).
