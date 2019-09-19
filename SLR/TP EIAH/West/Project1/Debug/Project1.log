@@ -1,0 +1,9 @@
+﻿D:\Games\Visual Studio\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(391,5): warning MSB8028: промежуточный каталог (Debug\) содержит файлы, которые используются совместно с другим проектом (Project1.vcxproj).  Это может привести к ошибкам очистки и перестроения.
+  West.c
+c:\users\pasinozavr\source\repos\project1\project1\west.c(59): warning C4473: "scanf_s": передано недостаточно аргументов для строки формата
+  c:\users\pasinozavr\source\repos\project1\project1\west.c(59): note: заполнители и их параметры ожидают переменное число аргументов в количестве 2, но было предоставлено 1
+  c:\users\pasinozavr\source\repos\project1\project1\west.c(59): note: отсутствующий вариативный аргумент "2" требуется для строки форматирования "%c"
+  c:\users\pasinozavr\source\repos\project1\project1\west.c(59): note: этот аргумент используется в качестве размера буфера
+c:\users\pasinozavr\source\repos\project1\project1\west.c(450): warning C4244: =: преобразование "float" в "int", возможна потеря данных
+c:\users\pasinozavr\source\repos\project1\project1\west.c(460): warning C4244: функция: преобразование "time_t" в "unsigned int", возможна потеря данных
+  Project1.vcxproj -> C:\Users\Pasinozavr\source\repos\Project1\Debug\West.exe
