@@ -1,0 +1,13 @@
+1) Why the ITask interface can not inherit the ITaskObserver interface?
+
+The ITask interface takes a generic type whereas ITaskObserver does not. So, the type can not be planned in advance. That's why inheritance is impossible between these interfaces.
+
+2) Why do not instances of the TaskObserverImpl class need to be published when the instance of the ComputeEngineFactory class must be published in a RMI registry?
+
+TaskOberverImpl is in the client side, ComputeEngineFactory is in the server side. This is why the server must be published in an RMI registry. But the client can recover the data in the registry.
+
+3) Explain in a few lines the operation of the execution of a synchronous task by indicating the different objects and methods used.
+Initialization of the observer who will take the task in charge
+Send the request to the server to call ComputeEngineFactory which will call its execute () method.
+The server retrieves the description of the task and sends it to the client side
+...

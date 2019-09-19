@@ -1,0 +1,3 @@
+grant codeBase "file:/Users/lemeunie/Desktop/Archive/appclient" {
+    permission java.security.AllPermission;
+};
