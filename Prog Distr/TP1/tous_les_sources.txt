@@ -1,0 +1,602 @@
+/*
+ * JournalApp.java
+ *
+ * Created on 5 juillet 2007, 09:01
+ *
+ * To change this template, choose Tools | Template Manager
+ * and open the template in the editor.
+ */
+
+package journal;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import javax.jms.Connection;
+import javax.jms.JMSException;
+import javax.jms.Session;
+import javax.jms.Topic;
+import javax.jms.TopicSubscriber;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.jms.ConnectionFactory;
+import javax.naming.NamingException;
+
+/**
+ * Controler Application Singleton Class
+ * @author lemeunie
+ */
+public class JournalApp {
+    
+    private static JournalApp instance = null;
+    
+    private static String topic_name = null;
+    private static String subscriber_name = null;
+    
+    /**
+     * Creates the unique instance of JournalApp
+     */
+    public static JournalApp createInstance(String topic_name, String subscriber_name) {
+        return new JournalApp(topic_name, subscriber_name);
+    }
+    
+    /** Return the unique instance of the JournalApp class */
+    public static JournalApp getInstance() {
+        return instance;
+    }
+    
+    /** Creates a new instance of JournalApp */
+    protected JournalApp(String topic_name, String subscriber_name) {
+        JournalApp.topic_name =  topic_name;
+        JournalApp.subscriber_name = subscriber_name;
+    }
+    
+    public static void main(String[] args) {
+        Context context = null;
+        String factoryName = "ConnectionFactory";
+        ConnectionFactory factory = null;
+        Topic topic = null;
+        Connection connection = null;
+        Session session = null;
+        TopicSubscriber subscriber = null;
+        
+        if (args.length != 2) {
+            System.out.println("usage: JournalApp <topic_name> <subscriber_name>");
+            System.exit(1);
+        }
+        
+        topic_name = args[0];
+        subscriber_name = args[1];
+        
+        try {
+            // create the JNDI initial context
+            context = new InitialContext();
+            
+            // look up the ConnectionFactory
+            factory = (ConnectionFactory) context.lookup(factoryName);
+            
+            // look up the Desination
+            topic = (Topic) context.lookup(topic_name);
+            
+            // create the connection
+            connection = factory.createConnection();
+            
+            // create the session
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            
+            // create the durable subscriber
+            subscriber = session.createDurableSubscriber(topic, subscriber_name);
+            
+            // register a listener
+            subscriber.setMessageListener(new JournalListener());
+            
+            // create the journal persistance
+            JournalPersistance.getInstance("save-" + new java.util.GregorianCalendar().getTimeInMillis());
+            
+            // start the connection, to enable message receipt
+            connection.start();
+            
+            System.out.println("Press [return] to stop]");
+            BufferedReader waiter = new BufferedReader(new InputStreamReader(System.in));
+            
+            waiter.readLine();
+            
+            // stop journal persistance
+            JournalPersistance.getInstance().arret();
+            
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (JMSException exception) {
+            exception.printStackTrace();
+        } catch (NamingException exception) {
+            exception.printStackTrace();
+        } finally {
+            // close the context
+            if (context != null) {
+                try {
+                    context.close();
+                } catch (NamingException exception) {
+                    exception.printStackTrace();
+                }
+            }
+            
+            // close the connection
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (JMSException exception) {
+                    exception.printStackTrace();
+                }
+            }
+        }
+    }
+    
+}
+
+--------------------------------------------------------------------
+
+/*
+ * JournalListener.java
+ *
+ * Created on 5 juillet 2007, 10:13
+ *
+ * To change this template, choose Tools | Template Manager
+ * and open the template in the editor.
+ */
+
+package journal;
+
+import javax.jms.Message;
+import javax.jms.MessageListener;
+import javax.jms.TextMessage;
+import journal.JournalPersistance;
+
+/**
+ *
+ * @author lemeunie
+ */
+public class JournalListener implements MessageListener {
+    
+    public void onMessage(Message message) {
+        if (message instanceof TextMessage) {                        
+            TextMessage messageText = (TextMessage) message;            
+            JournalMessage jMessage = new JournalMessage(messageText);            
+            System.out.println(jMessage);
+            JournalPersistance.getInstance().tracer(jMessage);
+        }
+    }
+    
+}
+
+-----------------------------------------------------------------------------------------
+
+/*
+ * JournalMessage.java
+ *
+ * Created on 5 juillet 2007, 12:10
+ *
+ * To change this template, choose Tools | Template Manager
+ * and open the template in the editor.
+ */
+
+package journal;
+
+import java.io.Serializable;
+import java.util.Date;
+import javax.jms.JMSException;
+import javax.jms.TextMessage;
+
+/**
+ * Journal message representation. It's must be a JavaBean to be encode by XMLEncoder.
+ * @author lemeunie
+ */
+public class JournalMessage {
+        
+    private String body;
+    private String machineName;
+    private String login;
+    private String applicationName;
+    private Date date;
+    
+    public JournalMessage() {}
+    
+    /** Creates a new instance of JournalMessage */
+    public JournalMessage(TextMessage message) {
+        try {
+            date = new Date(message.getJMSTimestamp());
+            machineName = message.getStringProperty("machineName");
+            login = message.getStringProperty("login");
+            applicationName = message.getStringProperty("applicationName");
+            body = message.getText();
+        } catch (JMSException ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void setBody(String body) {
+        this.body =  body;
+    }
+    
+    public String getBody() {
+        return body;
+    }
+    
+    public void setMachineName(String machineName) {
+        this.machineName = machineName;
+    }
+    
+    public String getMachineName() {
+        return machineName;
+    }
+    
+    public String getLogin() {
+        return login;
+    }
+    
+    public void setLogin(String login) {
+        this.login = login;
+    }
+    
+    public String getApplicationName() {
+        return applicationName;
+    }
+    
+    public void setApplicationName(String applicationName) {
+        this.applicationName = applicationName;
+    }
+    
+    public Date getDate() {
+        return date;
+    }
+    
+    public void setDate(Date date) {
+        this.date = date;
+    }
+    
+    public String toString() {
+        String string = new String();
+        string = date + " [" + machineName + "]" + " [" + login + "]";
+        if (applicationName != null)
+            string = string + " [" + applicationName + "]";
+        string = string + " : " + body;
+        return string;
+    }
+}
+
+--------------------------------------------------------------------------------
+
+/*
+ * JournalPersitance.java
+ *
+ * Created on 5 juillet 2007, 12:15
+ *
+ * To change this template, choose Tools | Template Manager
+ * and open the template in the editor.
+ */
+
+package journal;
+
+import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.zip.GZIPOutputStream;
+
+import java.beans.XMLEncoder;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+/**
+ *
+ * @author lemeunie
+ */
+public class JournalPersistance extends Thread {
+    
+    private static JournalPersistance instance = null; //l'instance unique
+    private boolean stop; // indicateur pour continuer ou arrêtre ce thread
+    private String name; //nom pour créer le fichier trace ouvert en écriture
+    private XMLEncoder out; // La sortie du traceur
+    private List evenements; // Liste des traces à écrire
+    
+    /**
+     * Méthode d'accés à l'unique instance
+     * @param name Le nom sous lequel la session est ouverte
+     */
+    public static JournalPersistance getInstance(String name) {
+        // Si c'est le premier appel, on crée le thread et on le lance
+        if (instance == null) {
+            instance = new JournalPersistance(name);
+            instance.setPriority(Thread.MIN_PRIORITY); // On prend le moins de temps possible
+            instance.start();
+        }
+        return instance;
+    }
+    
+    /**
+     * Méthode d'accès à l'unique instance
+     * @return L'unique instance de cette classe
+     */
+    public static JournalPersistance getInstance() {
+        return instance;
+    }
+        
+   /*
+    * (non-Javadoc)
+    * @see java.lang.Runnable#run()
+    */
+    public void run() {
+        // Début de la session
+        ouverture();
+        
+        // Session en cours
+        while (!stop) {
+            ecriture();
+            try { Thread.sleep(5); } catch(InterruptedException e) { return ;}
+        }
+        
+        // Fin de la session
+        fermeture();
+    }
+    
+    /**
+     * Demande d'arrêt du traceur
+     */
+    public synchronized void arret() {
+        stop = true;
+    }
+    
+    /**
+     * Ecriture d'une trace donnée dans le fichier de trace.
+     * @param objet L'objet à ajouter dans la trace
+     */
+    public void tracer(Object objet) {        
+        synchronized(evenements) {
+            try { evenements.wait(); } catch (InterruptedException e) { e.printStackTrace(); }
+            evenements.add(objet);
+        }
+    }
+    
+    /**
+     * Construction privé du traceur.<br>
+     * Il n'y a qu'un traceur par application.
+     * @param name Le nom sous lequel la session a été ouverte
+     */
+    private JournalPersistance(String name) {
+        this.name = new String(name);
+        evenements = new LinkedList();
+        stop = false;
+    }
+    
+    /**
+     * Ecriture dans le fichier de trace.
+     */
+    private void ecriture() {
+        synchronized(evenements) {
+            if (!evenements.isEmpty()) {
+                out.writeObject(evenements.remove(0));
+                out.flush();
+            }
+            evenements.notify();
+        }
+    }
+    
+    /**
+     * Ouverture du fichier en écriture. Il faut regarder s'il n'existe pas déjà.
+     * S'il existe, il faut modifier le nom donné.
+     */
+    private void ouverture() {
+        String filename = new String(name);
+        File f = new File(filename + ".xgz");
+        int i = 1;
+        
+        while (f.exists()) {
+            filename = name + " (" + (i++) + ")";
+            f = new File(filename + ".xgz");
+        }
+        
+        try {
+            // Ouverture du fichier XML
+            out = new XMLEncoder(new GZIPOutputStream(new FileOutputStream(filename + ".xgz")));            
+            
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+    
+    /**
+     * Fermeture du fichier XML de trace.
+     */
+    private void fermeture() {
+        out.flush();
+        out.close();
+    }    
+
+}
+
+------------------------------------------------------------------------------------------
+
+/*
+ * JournalTest.java
+ *
+ * Created on 5 juillet 2007, 09:02
+ *
+ * To change this template, choose Tools | Template Manager
+ * and open the template in the editor.
+ */
+
+package journaltest;
+
+import java.util.Random;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+/**
+ *
+ * @author lemeunie
+ */
+public class JournalTest {
+    
+    /** Creates a new instance of JournalTest */
+    public JournalTest() {
+    }
+    
+    public static void main(String[] args) {
+        Context context = null;
+        ConnectionFactory factory = null;
+        Connection connection = null;
+        String factoryName = "ConnectionFactory";
+        Destination dest = null;
+        Session session = null;
+        MessageProducer sender = null;
+        
+        String machineName = null;
+        String login = null;
+        String applicationName = null;
+        String destName = null;
+        
+        String messageText = null;
+        
+        if (args.length < 1 || args.length > 4) {
+            System.out.println("usage: JournalTest <machine_name> <login> <application_name> <destination>");
+            System.exit(1);
+        }
+        
+        machineName = args[0];
+        login = args[1];
+        applicationName = args[2];
+        destName = args[3];
+        
+        try {
+            // create the JNDI initial context.
+            context = new InitialContext();
+            
+            // look up the ConnectionFactory
+            factory = (ConnectionFactory) context.lookup(factoryName);
+            
+            // look up the Destination
+            dest = (Destination) context.lookup(destName);
+            
+            // create the connection
+            connection = factory.createConnection();
+            
+            // create the session
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            
+            // create the sender
+            sender = session.createProducer(dest);
+            
+            // start the connection, to enable message sends
+            connection.start();
+            
+            // Evenement <login> sur la machine
+            TextMessage message = session.createTextMessage();
+            message.setText("Login");
+            message.setStringProperty("machineName", machineName);
+            message.setStringProperty("login", login);
+            sender.send(message);
+            
+            Random rand = new java.util.Random();
+            try {
+                Thread.sleep(rand.nextInt(1000));
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+            
+            // Evenement <lancement de l'application>
+            message = session.createTextMessage();
+            message.setText("Lancement");
+            message.setStringProperty("machineName", machineName);
+            message.setStringProperty("login", login);
+            message.setStringProperty("applicationName", applicationName);
+            sender.send(message);
+            
+            try {
+                Thread.sleep(rand.nextInt(5000));
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+            
+            // Evenement <erreur> dans l'application
+            message = session.createTextMessage();
+            message.setText("Erreur : fichier toto.xml non trouve");
+            message.setStringProperty("machineName", machineName);
+            message.setStringProperty("login", login);
+            message.setStringProperty("applicationName", applicationName);
+            sender.send(message);
+            
+            try {
+                Thread.sleep(rand.nextInt(100));
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+            
+            // Evenement <arret> ou <arret anormal> de l'application
+            message = session.createTextMessage();
+            if (rand.nextInt(100) < 50)
+                message.setText("Arret anormal");
+            else
+                message.setText("Arret normal");
+            message.setStringProperty("machineName", machineName);
+            message.setStringProperty("login", login);
+            message.setStringProperty("applicationName", applicationName);
+            sender.send(message);
+            
+            try {
+                Thread.sleep(rand.nextInt(5000));
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+            
+            // Evenement <logout> sur la machine
+            message = session.createTextMessage();
+            message.setText("Logout");
+            message.setStringProperty("machineName", machineName);
+            message.setStringProperty("login", login);
+            sender.send(message);
+            
+        } catch (JMSException exception) {
+            exception.printStackTrace();
+        } catch (NamingException exception) {
+            exception.printStackTrace();
+        } finally {
+            // close the context
+            if (context != null) {
+                try {
+                    context.close();
+                } catch (NamingException exception) {
+                    exception.printStackTrace();
+                }
+            }
+            
+            // close the connection
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (JMSException exception) {
+                    exception.printStackTrace();
+                }
+            }
+        }
+        
+    }
+    
+}
+
+---------------------------------------------------------------------------------------------
+
+set CLASSPATH=.;c:\openjms-0.7.7-beta-1\lib\jms-1.1.jar;c:\openjms-0.7.7-beta-1\lib\openjms-0.7.7-beta-1.jar
+
+java -cp %CLASSPATH% journal.JournalApp %1 %2
+
+----------------------------------------------------------------------------------------------
+
+set CLASSPATH=.;c:\openjms-0.7.7-beta-1\lib\jms-1.1.jar;c:\openjms-0.7.7-beta-1\lib\openjms-0.7.7-beta-1.jar
+
+java -cp %CLASSPATH% journaltest.JournalTest %1 %2 %3 %4 
+
