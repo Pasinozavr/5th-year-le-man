@@ -1,0 +1,21 @@
+<h3>Edition d'une entreprise</h3>
+<label>Nom : </label>
+<input type="text" [(ngModel)]="entreprise.nom" placeholder="Nom de l'entreprise">
+<br/>
+<label>Adresse : </label>
+<input type="text" [(ngModel)]="entreprise.adresse" placeholder="Adresse de l'entreprise">
+<br/>
+<label>Code postal : </label>
+<input type="text" [(ngModel)]="entreprise.codePostal" placeholder="Code postal en chiffre">
+<br/>
+<label>Ville : </label>
+<input type="text" [(ngModel)]="entreprise.ville" placeholder="Ville de l'entreprise">
+<br/>
+<label>Pays : </label>
+<input type="text" [(ngModel)]="entreprise.pays" placeholder="Pays de l'entreprise">
+<br/>
+<label>Email : </label>
+<input type="text" [(ngModel)]="entreprise.email" placeholder="Email DRH ou équivalent">
+<br/><br/>
+<input type="button" (click)="valider()" value="Valider" [routerLink]="['/entreprises']">
+<input type="reset" (click)="annuler()" value="Annuler" [routerLink]="['/entreprises']">

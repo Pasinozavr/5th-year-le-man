@@ -1,0 +1,24 @@
+<h3>Edition d'un contact</h3>
+<label>Nom : </label>
+<input type="text" [(ngModel)]="contact.nom" placeholder="Nom de famille">
+<br />
+<label>Prenom : </label>
+<input type="text" [(ngModel)]="contact.prenom" placeholder="Nom du contact">
+<br />
+<label>Telephone : </label>
+<input type="text" [(ngModel)]="contact.telephone" placeholder="Numero de telephone">
+<br />
+<label>Email : </label>
+<input type="text" [(ngModel)]="contact.email" placeholder="Email du contact">
+<br />
+<div *ngIf="entreprises$ | async; let list; else elseBlock">
+  <label>Entreprise : </label>
+  <select [(ngModel)]="contact.entreprise" placeholder="Entreprise du contact">
+    <option *ngFor="let entreprise of list" [ngValue]="entreprise">{{entreprise.nom}}</option>
+  </select>
+</div>
+<ng-template #elseBlock><label>Entreprise: Aucune entreprise</label></ng-template>
+
+<br />
+<input type="button" (click)="valider()" value="Valider" [routerLink]="['/contacts']">
+<input type="reset" (click)="annuler()" value="Annuler" [routerLink]="['/contacts']">

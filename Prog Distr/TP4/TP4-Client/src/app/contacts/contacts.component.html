@@ -1,0 +1,14 @@
+  <input type="button" *ngIf="!doNew" (click)="doNew=!doNew" value="Créer un contact">
+  <app-contact *ngIf="doNew" (creationDone)="doNew=false"></app-contact>
+  <div *ngIf="!doNew">
+    <div *ngIf="contacts$ | async; let list">
+      <label *ngIf="list.length > 0; else elseBlock">List des contacts</label>
+      <ng-template #elseBlock><label>Aucune contact</label></ng-template>
+      <ul>
+        <li *ngFor='let contact of list'>
+          <a [routerLink]="['/contacts', contact.id]">{{ contact.nom }})</a>
+          <input type="button" (click)="doDelete(contact)" value="Supprimer">
+        </li>
+      </ul>
+    </div>
+  </div>

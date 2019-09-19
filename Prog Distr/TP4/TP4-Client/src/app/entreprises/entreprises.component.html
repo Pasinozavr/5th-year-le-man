@@ -1,0 +1,16 @@
+<p>
+<input type="button" *ngIf="!doNew" (click)="doNew=!doNew" value="Créer une entreprise">
+<app-entreprise *ngIf="doNew" (creationDone)="doNew=false"></app-entreprise>
+<div *ngIf="!doNew">
+  <div *ngIf="entreprises$ | async; let list">
+    <label *ngIf="list.length > 0; else elseBlock">Liste des entreprises</label>
+    <ng-template #elseBlock><label>Aucune entreprise</label></ng-template>
+    <ul>
+      <li *ngFor='let entreprise of list'>
+        <a [routerLink]="['/entreprises', entreprise.id]">{{ entreprise.nom }} ({{ entreprise.ville }})</a>
+        <input type="button" (click)="doDelete(entreprise)" value="Supprimer">
+      </li>
+    </ul>
+  </div>
+</div>
+
