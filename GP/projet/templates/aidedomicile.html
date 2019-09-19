@@ -1,0 +1,24 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>aide domicle</title>
+
+    </head>
+
+    <body>
+        <h1>le métier d'aide à domicile:</h1>
+        
+        Les services à la personne regroupent les activités liées à l'assistance des personnes dans leurs tâches quotidiennes à leur domicile. Ils peuvent concerner les services à la famille (garde d'enfants, soutien scolaire, etc.), les services de la vie quotidienne (ménage, jardinage, etc.) ou les services aux personnes fragiles, personnes âgées, enfants de moins de trois ans, personnes handicapées, qui ont besoin d'une aide à la vie quotidienne
+
+        
+        <h2>{{ question }}</h2>
+        
+        {% for r in reponses %}
+            <input type="button" value={{r}} onclick="func()">
+        {% endfor %}
+        
+        <span id="statut"></span>
+    </body>
+</html>

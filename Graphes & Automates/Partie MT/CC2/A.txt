@@ -1,0 +1,6 @@
+1 2 <eps>
+2 3 <eps>
+3 4 <eps>
+4 0 <eps>
+0 1 hello
+0
